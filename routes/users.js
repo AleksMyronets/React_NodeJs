@@ -1,14 +1,15 @@
-import express from "express";
+import express from 'express';
+import controllers from '../controllers/users-controllers.js';
 
 const userRouter = express.Router();
 
-userRouter.post('/users/signup')
+//додати валідацію
+userRouter.post('/signup', controllers.signUp);
 
-userRouter.post('/users/login')
+userRouter.post('/login');
 
-userRouter.post('/users/logout')
+userRouter.post('/logout');
 
-userRouter.get('/users/current')
+userRouter.get('/current');
 
 export default userRouter;
-
