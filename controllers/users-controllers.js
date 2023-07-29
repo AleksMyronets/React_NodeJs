@@ -3,7 +3,6 @@ import jwt from 'jsonwebtoken';
 const { SECRET_KEY } = process.env;
 
 const signUp = async (req, res, next) => {
-  console.log(User);
   const { name, email, password } = req.body;
   try {
     const user = await User.findOne({ email });
