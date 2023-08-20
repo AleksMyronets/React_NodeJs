@@ -22,6 +22,7 @@ export const authenticate = async (req, res, next) => {
       return;
     }
     req.user = searchedUser;
+    console.log(12345);
     next();
   } catch (error) {
     console.log('error:', error);

@@ -1,6 +1,13 @@
 import User from '../db/models/userModels.js';
 import jwt from 'jsonwebtoken';
 const { SECRET_KEY } = process.env;
+import fs from 'fs/promises';
+import path from 'path';
+import gravatar from 'gravatar';
+
+const replaceSpacesWithUnderscores = (filename) => {
+  return filename.replace(/\s+/g, '_');
+};
 
 const signUp = async (req, res, next) => {
   const { name, email, password } = req.body;
@@ -11,7 +18,8 @@ const signUp = async (req, res, next) => {
       return;
     }
 
-    const newUser = new User({ name, email, password });
+    const avatarURL = gravatar.url(email, { s: '200', r: 'pg', d: 'mp' });
+    const newUser = new User({ name, email, password, avatarURL });
     await newUser.hashPassword(password);
 
     await newUser.save();
@@ -25,7 +33,7 @@ const signUp = async (req, res, next) => {
 
     res.status(201).json({
       token,
-      user: { name, email },
+      user: { name, email, avatarURL },
     });
   } catch (error) {
     console.log(error);
@@ -61,6 +69,7 @@ const login = async (req, res, next) => {
     user: {
       name: searchedUser.name,
       email,
+      avatarURL: searchedUser.avatarURL,
     },
   });
 };
@@ -75,9 +84,35 @@ const logout = async (req, res, next) => {
 };
 
 const getCurrentUser = async (req, res, next) => {
-  const { name, email } = req.user;
+  const { name, email, avatarURL } = req.user;
 
-  res.json({ name, email });
+  res.json({ name, email, avatarURL });
+};
+
+const changeAvatar = async (req, res, next) => {
+  try {
+    console.log(req.file);
+    const { _id } = req.user;
+    const { path: tempDir, originalname } = req.file;
+
+    const normalizedName = replaceSpacesWithUnderscores(originalname);
+
+    const uniqueFileName = `${_id}-${normalizedName}`;
+    const avatarsPath = path.resolve('public', 'avatars');
+    const resultPath = path.join(avatarsPath, uniqueFileName);
+
+    await fs.rename(tempDir, resultPath);
+
+    const avatarURL = path.join('avatars', uniqueFileName);
+
+    await User.findByIdAndUpdate(_id, { avatarURL });
+
+    res.json({
+      avatar: avatarURL,
+    });
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 export default {
@@ -85,4 +120,5 @@ export default {
   login,
   logout,
   getCurrentUser,
+  changeAvatar,
 };
